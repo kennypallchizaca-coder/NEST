@@ -9,7 +9,7 @@ const decimalTransformer: ValueTransformer = {
 @Entity('products')
 export class ProductEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 200, nullable: false })
-  name: string;
+  name!: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
@@ -21,8 +21,8 @@ export class ProductEntity extends BaseEntity {
     nullable: false,
     transformer: decimalTransformer,
   })
-  price: number;
+  price!: number;
 
   @Column({ type: 'int', default: 0 })
-  stock: number;
+  stock!: number;
 }

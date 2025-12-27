@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from '../dtos/create-user.dto';
@@ -7,6 +7,8 @@ import { UpdateUserDto } from '../dtos/update-user.dto';
 import { UserResponseDto } from '../dtos/user-response.dto';
 import { UserEntity } from '../entities/user.entity';
 import { User } from '../models/user.model';
+import { NotFoundException } from '../../exceptions/domain/not-found.exception';
+import { ConflictException } from '../../exceptions/domain/conflict.exception';
 
 @Injectable()
 export class UsersService {
@@ -24,8 +26,8 @@ export class UsersService {
 
     // 2. Entities → Domain Models → DTOs (programación funcional)
     return entities
-      .map(User.fromEntity)           // Entity → User
-      .map(user => user.toResponseDto()); // User → DTO
+      .map(User.fromEntity) // Entity → User
+      .map((user) => user.toResponseDto()); // User → DTO
   }
 
   /**
@@ -35,7 +37,7 @@ export class UsersService {
     const entity = await this.userRepository.findOne({ where: { id } });
 
     if (!entity) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Usuario no encontrado con ID: ${id}`);
     }
 
     return User.fromEntity(entity).toResponseDto();
@@ -45,9 +47,18 @@ export class UsersService {
    * Crear usuario (flujo funcional)
    */
   async create(dto: CreateUserDto): Promise<UserResponseDto> {
+    // Validar que el email no exista
+    const existingUser = await this.userRepository.findOne({
+      where: { email: dto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('El email ya esta registrado');
+    }
+
     // Flujo funcional: DTO → Model → Entity → Save → Model → DTO
-    const user = User.fromDto(dto);           // DTO → Domain
-    const entity = user.toEntity();            // Domain → Entity
+    const user = User.fromDto(dto); // DTO → Domain
+    const entity = user.toEntity(); // Domain → Entity
     const saved = await this.userRepository.save(entity); // Persistir
 
     return User.fromEntity(saved).toResponseDto(); // Entity → Domain → DTO
@@ -60,13 +71,13 @@ export class UsersService {
     const entity = await this.userRepository.findOne({ where: { id } });
 
     if (!entity) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Usuario no encontrado con ID: ${id}`);
     }
 
     // Flujo funcional con transformaciones
-    const updated = User.fromEntity(entity)  // Entity → Domain
-      .update(dto)                           // Aplicar cambios
-      .toEntity();                           // Domain → Entity
+    const updated = User.fromEntity(entity) // Entity → Domain
+      .update(dto) // Aplicar cambios
+      .toEntity(); // Domain → Entity
 
     const saved = await this.userRepository.save(updated);
 
@@ -83,7 +94,7 @@ export class UsersService {
     const entity = await this.userRepository.findOne({ where: { id } });
 
     if (!entity) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Usuario no encontrado con ID: ${id}`);
     }
 
     const updated = User.fromEntity(entity)
@@ -102,7 +113,7 @@ export class UsersService {
     const result = await this.userRepository.delete(id);
 
     if (result.affected === 0) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Usuario no encontrado con ID: ${id}`);
     }
   }
 }
