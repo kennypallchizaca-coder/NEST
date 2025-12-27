@@ -1,4 +1,3 @@
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,7 +13,7 @@ export class ProductsService {
   constructor(
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
-  ) { }
+  ) {}
 
   /**
    * Obtener todos los productos (enfoque funcional)
@@ -25,8 +24,8 @@ export class ProductsService {
 
     // 2. Entities → Domain Models → DTOs (programación funcional)
     return entities
-      .map(Product.fromEntity)           // Entity → Product
-      .map(product => product.toResponseDto()); // Product → DTO
+      .map((entity) => Product.fromEntity(entity)) // Entity → Domain
+      .map((product) => product.toResponseDto()); // Product → DTO
   }
 
   /**
@@ -46,8 +45,8 @@ export class ProductsService {
    * Crear producto
    */
   async create(dto: CreateProductDto): Promise<ProductResponseDto> {
-    const product = Product.fromDto(dto);           // DTO → Domain
-    const entity = product.toEntity();              // Domain → Entity
+    const product = Product.fromDto(dto); // DTO → Domain
+    const entity = product.toEntity(); // Domain → Entity
     const saved = await this.productRepository.save(entity); // Persistir
 
     return Product.fromEntity(saved).toResponseDto(); // Entity → Domain → DTO
@@ -63,9 +62,7 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    const updated = Product.fromEntity(entity)
-      .update(dto)
-      .toEntity();
+    const updated = Product.fromEntity(entity).update(dto).toEntity();
 
     const saved = await this.productRepository.save(updated);
 
@@ -75,16 +72,17 @@ export class ProductsService {
   /**
    * Actualizar parcialmente (PATCH)
    */
-  async partialUpdate(id: number, dto: PartialUpdateProductDto): Promise<ProductResponseDto> {
+  async partialUpdate(
+    id: number,
+    dto: PartialUpdateProductDto,
+  ): Promise<ProductResponseDto> {
     const entity = await this.productRepository.findOne({ where: { id } });
 
     if (!entity) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    const updated = Product.fromEntity(entity)
-      .partialUpdate(dto)
-      .toEntity();
+    const updated = Product.fromEntity(entity).partialUpdate(dto).toEntity();
 
     const saved = await this.productRepository.save(updated);
 
