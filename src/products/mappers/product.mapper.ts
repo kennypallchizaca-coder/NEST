@@ -2,7 +2,7 @@ import { CreateProductDto } from '../dtos/create-product.dto';
 import { PartialUpdateProductDto } from '../dtos/partial-update-product.dto';
 import { ProductResponseDto } from '../dtos/product-response.dto';
 import { UpdateProductDto } from '../dtos/update-product.dto';
-import { Product } from '../entities/product.entity';
+import { Product } from '../models/product.model';
 
 export class ProductMapper {
   static toEntity(
@@ -11,7 +11,8 @@ export class ProductMapper {
   ): Product {
     const name = dto.name ?? '';
     const price = dto.price ?? 0;
-    return new Product(id, name, price, dto.description);
+    const stock = dto.stock ?? 0;
+    return new Product(id, name, dto.description, price, stock, new Date());
   }
 
   static toResponse(entity: Product): ProductResponseDto {
@@ -20,6 +21,8 @@ export class ProductMapper {
       name: entity.name,
       price: entity.price,
       description: entity.description,
+      stock: entity.stock,
+      createdAt: entity.createdAt.toISOString(),
     };
   }
 }

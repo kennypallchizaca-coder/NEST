@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -11,68 +13,47 @@ import {
 import { CreateProductDto } from '../dtos/create-product.dto';
 import { PartialUpdateProductDto } from '../dtos/partial-update-product.dto';
 import { UpdateProductDto } from '../dtos/update-product.dto';
-import { Product } from '../entities/product.entity';
-import { ProductMapper } from '../mappers/product.mapper';
+import { ProductsService } from '../services/products.service';
+import { ProductResponseDto } from '../dtos/product-response.dto';
 
 @Controller('productos')
 export class ProductsController {
-  private products: Product[] = [];
-  private currentId = 1;
+  constructor(private readonly service: ProductsService) { }
 
   @Get()
-  findAll() {
-    return this.products.map((product) => ProductMapper.toResponse(product));
+  async findAll(): Promise<ProductResponseDto[]> {
+    return await this.service.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    const productId = Number(id);
-    const product = this.products.find((p) => p.id === productId);
-    if (!product) return { error: 'Product not found' };
-
-    return ProductMapper.toResponse(product);
+  async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
+    return await this.service.findOne(Number(id));
   }
 
   @Post()
-  create(@Body() dto: CreateProductDto) {
-    const entity: Product = ProductMapper.toEntity(this.currentId++, dto);
-    this.products.push(entity);
-    return ProductMapper.toResponse(entity);
+  async create(@Body() dto: CreateProductDto): Promise<ProductResponseDto> {
+    return await this.service.create(dto);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
-    const productId = Number(id);
-    const product = this.products.find((p) => p.id === productId);
-    if (!product) return { error: 'Product not found' };
-
-    product.name = dto.name;
-    product.price = dto.price;
-    product.description = dto.description;
-
-    return ProductMapper.toResponse(product);
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateProductDto,
+  ): Promise<ProductResponseDto> {
+    return await this.service.update(Number(id), dto);
   }
 
   @Patch(':id')
-  partialUpdate(@Param('id') id: string, @Body() dto: PartialUpdateProductDto) {
-    const productId = Number(id);
-    const product = this.products.find((p) => p.id === productId);
-    if (!product) return { error: 'Product not found' };
-
-    if (dto.name !== undefined) product.name = dto.name;
-    if (dto.price !== undefined) product.price = dto.price;
-    if (dto.description !== undefined) product.description = dto.description;
-
-    return ProductMapper.toResponse(product);
+  async partialUpdate(
+    @Param('id') id: string,
+    @Body() dto: PartialUpdateProductDto,
+  ): Promise<ProductResponseDto> {
+    return await this.service.partialUpdate(Number(id), dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    const productId = Number(id);
-    const exists = this.products.some((p) => p.id === productId);
-    if (!exists) return { error: 'Product not found' };
-
-    this.products = this.products.filter((p) => p.id !== productId);
-    return { message: 'Deleted successfully' };
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id') id: string): Promise<void> {
+    return await this.service.delete(Number(id));
   }
 }

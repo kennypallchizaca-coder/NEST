@@ -3,4 +3,6 @@ export class ProductResponseDto {
   name: string;
   price: number;
   description?: string;
+  stock: number;
+  createdAt: string;
 }
